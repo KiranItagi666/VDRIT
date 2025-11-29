@@ -2,11 +2,12 @@ pipeline {
   agent any
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/youruser/vdrt-devops-demo.git', branch: 'main'
-      }
+   stage('Checkout') {
+    steps {
+        git url: 'https://github.com/KiranItagi666/VDRIT.git', branch: 'main'
     }
+}
+
 
     stage('Build/Validate') {
       steps {
