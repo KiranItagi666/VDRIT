@@ -1,38 +1,45 @@
 pipeline {
   agent any
 
-  stages {
-   stage('Checkout') {
-    steps {
-        git url: 'https://github.com/KiranItagi666/VDRIT.git', branch: 'main'
-    }
-}
+  environment {
+    WEBROOT = "/var/www/html"
+    TARGET = "${env.WEBROOT}/index.html"
+  }
 
+  stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/KiranItagi666/VDRIT.git', credentialsId: 'github-pat', branch: 'main'
+      }
+    }
 
     stage('Build/Validate') {
       steps {
-        // simple validation: ensure index.html exists
         sh 'test -f index.html && echo "index.html found" || (echo "index.html missing" && exit 1)'
       }
     }
 
     stage('Deploy to Webroot') {
       steps {
-        // copy index.html to nginx webroot
-        // use sudo if required; here we assume jenkins user can write to /var/www/html
-        sh 'cp -f index.html /var/www/html/index.html'
+        sh '''
+          echo "Deploying index.html to ${TARGET}"
+          sudo /bin/cp -f index.html "${TARGET}"
+          sudo /bin/chown www-data:www-data "${TARGET}"
+          sudo /bin/chmod 644 "${TARGET}"
+          echo "Deployed: $(ls -l ${TARGET})"
+        '''
+      }
+    }
+
+    stage('Verify') {
+      steps {
+        sh 'curl -I http://localhost/ || true'
       }
     }
   }
 
   post {
-    success {
-      echo "Deployment successful. Visit http://$env.BUILD_URL/"
-    }
-    failure {
-      echo "Pipeline failed"
-    }
+    success { echo "Deployment successful" }
+    failure { echo "Pipeline failed" }
   }
 }
-
-
